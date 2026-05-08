@@ -36,6 +36,8 @@
 
 *Benchmarked on Intel i7, 16GB RAM, Windows 10, single process, 200 iterations.*
 
+### Inference Latency (single transaction, measured locally)
+
 | Metric | Value |
 |---|---|
 | Feature Transform (p50) | 90 ms |
@@ -43,8 +45,24 @@
 | Total /predict (p50) | 139 ms |
 | SHAP Overhead (p50) | 12 ms |
 | Single-thread Throughput | 7 req/s |
-| Ensemble F1 Score | 0.97 (on real credit card data) |
-| Ensemble ROC-AUC | 0.999 |
+
+### Model Performance (full 284k dataset, 5-fold CV with fold-internal SMOTE)
+
+| Metric | Value |
+|---|---|
+| Accuracy | 0.9988 |
+| Precision | 0.5791 |
+| Recall | 1.0000 |
+| F1 Score | 0.7334 |
+| ROC-AUC | 0.9999 |
+| Optimal Threshold | 0.680 |
+
+| Sub-Model | OOF AUC |
+|---|---|
+| Random Forest | 0.9814 |
+| XGBoost | 0.9792 |
+| LightGBM | 0.9807 |
+| AdaBoost | 0.9769 |
 
 ### Per-Step Latency (single transaction)
 
@@ -87,6 +105,22 @@ Transaction Request
        └──> Response
               fraud_probability, risk_level, top_risk_factors
 ```
+
+---
+
+## Model Training Methodology
+
+The initial production model was trained on the full Kaggle Credit Card Fraud dataset (284,807 transactions, 492 frauds, 0.17% fraud rate). Key design decisions:
+
+**Data preprocessing.** Extreme IQR outliers were removed from V14, V12, and V10 (the features most negatively correlated with the fraud class). Thresholds were computed on a balanced 50/50 subsample to avoid majority-class dominance. This removed 0.59% of transactions.
+
+**Feature engineering.** The pipeline generates 50+ features from 31 raw columns: cyclical time encoding, log/sqrt/Box-Cox amount transforms, per-row V-column statistics, Isolation Forest anomaly scores, K-Means cluster assignments, and pairwise V-feature interactions. Velocity features (rolling-window aggregates) are zero-filled at inference time and replaced by Redis real-time computation in production.
+
+**Handling class imbalance.** Three complementary strategies: (1) `class_weight='balanced'` for tree-based models and `scale_pos_weight` for XGBoost/LightGBM, (2) SMOTE oversampling of the minority class, and — critically — (3) SMOTE applied **inside each CV fold**, not before the split. Applying SMOTE before cross-validation leaks synthetic samples into validation folds and inflates metrics; this is the most common mistake flagged by Kaggle gold-medal notebooks on this dataset.
+
+**Ensemble design.** Five models (Random Forest, XGBoost, LightGBM, AdaBoost, Logistic Regression) are trained independently. The ensemble uses AUC-weighted soft voting: each model's fraud probability is weighted by its 5-fold OOF AUC, then averaged. The optimal decision threshold (0.68) was found by sweeping [0.1, 0.9] to maximize F1 on the full dataset.
+
+**Why recall is prioritized over precision.** In fraud detection, a false negative (missing a fraudulent transaction) costs far more than a false positive (blocking a legitimate one, which can be reversed). The ensemble achieves 100% recall at the cost of lower precision (58%). The threshold can be adjusted to trade off precision vs. recall based on business requirements.
 
 ---
 
