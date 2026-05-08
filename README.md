@@ -175,7 +175,7 @@ curl -X POST "http://localhost:8000/reload-models?version=v20260508_120000&role=
 ## Project Structure
 
 ```
-fraud-detection-system/
+fraud-mlops-platform/
 ├── data/
 │   ├── raw/creditcard.csv          # Real credit card fraud dataset
 │   └── predictions.db              # Prediction audit log (SQLite)

@@ -66,7 +66,7 @@ curl -fsSL https://get.docker.com | sh
 
 # Clone repo
 git clone <your-repo-url>
-cd fraud-detection-system
+cd fraud-mlops-platform
 
 # Start
 docker-compose -f docker-compose.yml up -d
