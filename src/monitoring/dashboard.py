@@ -67,7 +67,12 @@ st.markdown(
 )
 
 # API Configuration
-API_BASE_URL = "http://localhost:8000"  # Adjust if API is running elsewhere
+# Read API URL from Streamlit Secrets (cloud) or env var (Docker) or default (local)
+API_BASE_URL = (
+    st.secrets.get("API_BASE_URL") or
+    os.getenv("API_BASE_URL") or
+    "http://localhost:8000"
+)
 
 
 class TransactionSimulator:
