@@ -220,3 +220,4 @@ mlruns/
 feature_pipeline_metadata_*.json
 .pytest_temp/
 *.pyc
+reference_gold_answer
