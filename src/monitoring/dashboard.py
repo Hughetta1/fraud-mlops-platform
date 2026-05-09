@@ -84,15 +84,15 @@ class TransactionSimulator:
     def generate_transaction(self, fraud_bias=0.1):
         """Generate a realistic transaction with controllable fraud probability"""
 
-        # Generate base features (V1-V20)
+        # Generate V features — model expects V1-V28
         if random.random() < fraud_bias:
-            # Fraud transaction - different pattern
-            v_features = {f"V{i}": random.gauss(0, 2) for i in range(1, 21)}
-            amount = random.lognormal(4, 1.5)  # Larger amounts for fraud
+            # Fraud pattern: wider variance, some extreme values
+            v_features = {f"V{i}": round(random.gauss(0, 3), 6) for i in range(1, 29)}
+            amount = round(np.random.lognormal(4.5, 1.5), 2)
         else:
-            # Normal transaction
-            v_features = {f"V{i}": random.gauss(0, 1) for i in range(1, 21)}
-            amount = random.lognormal(3, 1)  # Normal amounts
+            # Normal pattern: tight around zero
+            v_features = {f"V{i}": round(random.gauss(0, 1), 6) for i in range(1, 29)}
+            amount = round(np.random.lognormal(3.2, 0.8), 2)
 
         # Generate transaction
         transaction = {
