@@ -9,7 +9,7 @@ Interactive Streamlit dashboard for monitoring fraud detection system:
 - System health metrics
 - Historical trend analysis
 
-Author: Sunny Nguyen
+Author: Hughetta1
 """
 
 import os
@@ -32,7 +32,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 # Configure Streamlit page
 st.set_page_config(
     page_title="Fraud Detection Dashboard",
-    page_icon="🛡️",
+    page_icon="[Fraud Detection]",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -311,7 +311,7 @@ def main():
     """Main dashboard function"""
 
     # Header
-    st.title("🛡️ Fraud Detection Dashboard")
+    st.title("[Fraud Detection] Fraud Detection Dashboard")
     st.markdown("Real-time monitoring for ML-powered fraud detection system")
 
     # Sidebar configuration
@@ -335,7 +335,7 @@ def main():
 
     if page == "Transaction Monitor":
         # Dashboard settings
-        auto_refresh = st.sidebar.checkbox("Auto-refresh", value=True)
+        auto_refresh = st.sidebar.checkbox("Auto-refresh", value=False)
         refresh_interval = st.sidebar.slider("Refresh interval (seconds)", 1, 30, 5)
         fraud_bias = st.sidebar.slider("Fraud simulation rate", 0.0, 0.5, 0.1, 0.01)
 
@@ -344,11 +344,6 @@ def main():
             st.session_state.transaction_history = []
         if "simulator" not in st.session_state:
             st.session_state.simulator = TransactionSimulator()
-
-        # Auto-refresh logic
-        if auto_refresh:
-            time.sleep(refresh_interval)
-            st.rerun()
 
         # Manual refresh button
         if st.sidebar.button("Refresh Now"):
@@ -416,10 +411,13 @@ def main():
     # Real-time transaction monitoring
     st.header("📊 Real-Time Transaction Monitoring")
 
-    # Generate and process new transaction
-    if st.button("🎲 Simulate New Transaction") or (
-        auto_refresh and len(st.session_state.transaction_history) < 50
-    ):
+    # Generate transaction automatically on auto-refresh or manually via button
+    should_generate = (
+        st.button("Simulate New Transaction") or
+        (auto_refresh and len(st.session_state.transaction_history) < 50)
+    )
+
+    if should_generate:
         # Generate transaction
         transaction = st.session_state.simulator.generate_transaction(fraud_bias)
 
@@ -447,7 +445,6 @@ def main():
             with col1:
                 st.subheader(f"Latest Transaction: {transaction['transaction_id']}")
 
-                # Transaction details
                 details_col1, details_col2, details_col3 = st.columns(3)
                 with details_col1:
                     st.metric("Amount", f"${transaction['Amount']:,.2f}")
@@ -456,13 +453,16 @@ def main():
                     st.metric("Fraud Probability", f"{fraud_prob:.1%}")
                 with details_col3:
                     risk_level = prediction.get("risk_level", "UNKNOWN")
-                    risk_color = {
-                        "LOW": "🟢",
-                        "MEDIUM": "🟡",
-                        "HIGH": "🟠",
-                        "CRITICAL": "🔴",
-                    }.get(risk_level, "⚪")
-                    st.metric("Risk Level", f"{risk_color} {risk_level}")
+                    st.metric("Risk Level", risk_level)
+
+                # Show key feature values that influence the prediction
+                st.caption("Key features of this transaction:")
+                feat_cols = st.columns(6)
+                key_features = ["V1", "V4", "V10", "V12", "V14", "V17"]
+                for i, feat in enumerate(key_features):
+                    with feat_cols[i]:
+                        val = transaction.get(feat, 0)
+                        st.metric(feat, f"{val:.3f}")
 
             with col2:
                 # Risk gauge
@@ -644,9 +644,9 @@ def main():
     st.markdown("---")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("**🛡️ Fraud Detection System**")
+        st.markdown("**[Fraud Detection] Fraud Detection System**")
     with col2:
-        st.markdown("**👨‍💻 Built by Sunny Nguyen**")
+        st.markdown("**Built by Hughetta1**")
     with col3:
         st.markdown(
             f"**📅 Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}**"
